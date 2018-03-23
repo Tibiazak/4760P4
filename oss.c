@@ -11,12 +11,15 @@
 #include <time.h>
 #include <sys/wait.h>
 #include <sys/msg.h>
+
 #define TIMEOUT 3
 #define SHAREKEY 92195
 #define MESSAGEKEY 110992
 #define BILLION 1000000000
 #define PROC_LIMIT 18
+
 typedef unsigned int uint;
+
 typedef struct pcb {
     int simpid;
     int priority;
@@ -24,6 +27,7 @@ typedef struct pcb {
     int time_in_system;
     int last_burst_time;
 } pcb;
+
 typedef struct sysclock {
     uint sec;
     uint nsec;
@@ -36,7 +40,7 @@ typedef struct mesg_buf {
 
 typedef struct share {
     sysclock Clock;
-    pcb pcb_array[18];
+    pcb pcb_array[PROC_LIMIT];
 } share;
 
 int ShareID;
@@ -92,8 +96,28 @@ static int setperiodic(double sec)
     return timer_settime(timerid, 0, &value, NULL);
 }
 
+
+int findopen(int *arr)
+{
+    int i = 0;
+    while(i<18){
+        if(!arr[i])
+        {
+            return i;
+        }
+        i++;
+    }
+    return -1;
+}
+
 int main(int argc, char *argv[]){
     message msg;
+    int bit_array[PROC_LIMIT];
+    int i;
+    for (i = 0; i < PROC_LIMIT; i++)
+    {
+        bit_array[i] = 0;
+    }
 
     // Set the timer-kill
     if (setinterrupt() == -1)
