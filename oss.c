@@ -17,6 +17,9 @@
 #define MESSAGEKEY 110992
 #define BILLION 1000000000
 #define PROC_LIMIT 18
+#define MaxTimeBetweenNewProcsSecs 1
+#define MaxTimeBetweeNewProcsNS 500000000
+#define RealTimeProcs 10
 
 typedef unsigned int uint;
 
@@ -110,27 +113,63 @@ int findopen(int *arr)
     return -1;
 }
 
-int main(int argc, char *argv[]){
-    message msg;
-    int bit_array[PROC_LIMIT];
+void zeroarray(int * arr, int limit)
+{
     int i;
-    for (i = 0; i < PROC_LIMIT; i++)
+    for (i = 0; i < limit; i++)
     {
-        bit_array[i] = 0;
+        arr[i] = 0;
     }
+}
 
+void queueforward(int * arr, int limit)
+{
+    int i = 0;
+    while(i < limit-1 && arr[i+1] != 0)
+    {
+        arr[i] = arr[i+1];
+        arr[i+1] = 0;
+        i++;
+    }
+}
+
+void startTimer()
+{
     // Set the timer-kill
     if (setinterrupt() == -1)
     {
-    perror("Failed to set up handler");
-    return 1;
+        perror("Failed to set up handler");
+        return 1;
     }
     if (setperiodic((long) TIMEOUT) == -1)
     {
-    perror("Failed to set up timer");
-    return 1;
+        perror("Failed to set up timer");
+        return 1;
     }
-    int proc_table[PROC_LIMIT];
+}
+
+int main(int argc, char *argv[]){
+    message msg;
+    uint idlesec = 0;
+    uint idlensec = 0;
+    int queue0[PROC_LIMIT];
+    int queue1[PROC_LIMIT];
+    int queue2[PROC_LIMIT];
+    int queue3[PROC_LIMIT];
+    int bit_array[PROC_LIMIT];
+    int blockQueue[PROC_LIMIT];
+    zeroarray(&queue0, PROC_LIMIT);
+    zeroarray(&queue1, PROC_LIMIT);
+    zeroarray(&queue2, PROC_LIMIT);
+    zeroarray(&queue3, PROC_LIMIT);
+    zeroarray(&bit_array, PROC_LIMIT);
+    zeroarray(&blockQueue, PROC_LIMIT);
+
+    if (startTimer() == 1)
+    {
+        perror("startTimer failed!");
+        return 1;
+    }
 
     // Setup the clock in shared memory
     ShareID = shmget(SHAREKEY, sizeof(share), 0777 | IPC_CREAT);
