@@ -1,5 +1,34 @@
-
 #define TIMEOUT 3
+#define SHAREKEY 92195
+#define MESSAGEKEY 110992
+#define BILLION 1000000000
+#define PROC_LIMIT 18
+typedef unsigned int uint;
+typedef struct pcb {
+    int simpid;
+    int priority;
+    int cpu_used;
+    int time_in_system;
+    int last_burst_time;
+} pcb;
+typedef struct clock {
+    uint sec;
+    uint nsec;
+} clock;
+typedef struct mesg_buf {
+    long mtype;
+    char mtext[100];
+} message;
+typedef struct share {
+    clock *Clock;
+    pcb *PCB;
+} share;
+
+int ShareID;
+share *Share;
+int MsgID;
+FILE *fp;
+
 // A function that catches SIGINT and SIGALRM
 // It prints an alert to the screen then sends a signal to all the child processes to terminate,
 // frees all the shared memory and closes the file.
@@ -49,6 +78,8 @@ static int setperiodic(double sec)
 }
 
 int main(int argc, char *argv[]){
+    message msg;
+
     // Set the timer-kill
     if (setinterrupt() == -1)
     {
@@ -60,4 +91,32 @@ int main(int argc, char *argv[]){
     perror("Failed to set up timer");
     return 1;
     }
+    int proc_table[PROC_LIMIT];
+
+    // Setup the clock in shared memory
+    ShareID = shmget(SHAREKEY, sizeof(share), 0777 | IPC_CREAT);
+    if(ShareID == -1)
+    {
+        perror("Master shmget");
+        exit(1);
+    }
+
+    Share = (share *)(shmat(ClockID, 0, 0));
+    if(Share == -1)
+    {
+        perror("Master shmat");
+        exit(1);
+    }
+
+    Share->Clock->sec = 5;
+    Share->Clock->nsec = 5;
+
+    MsgID = msgget(MESSAGEKEY, 0666 | IPC_CREAT);
+
+    printf("The clock is at %u seconds and %u nanoseconds.\n", Share->Clock->sec, Share->Clock->nsec);
+
+    shmdt(Share);
+    shmctl(ShareID, IPC_RMID, NULL);
+    msgctl(MsgID, IPC_RMID, NULL);
+    return 0;
 }
