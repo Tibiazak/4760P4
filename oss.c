@@ -50,7 +50,7 @@ static void interrupt(int signo, siginfo_t *info, void *context)
     int errsave;
 
     errsave = errno;
-    write(STDOUT_FILENO, TIMER_MSG, sizeof(TIMER_MSG) - 1);
+//    write(STDOUT_FILENO, TIMER_MSG, sizeof(TIMER_MSG) - 1);
     errno = errsave;
     signal(SIGUSR1, SIG_IGN);
     kill(-1*getpid(), SIGUSR1);
@@ -114,7 +114,7 @@ int main(int argc, char *argv[]){
         exit(1);
     }
 
-    Share = (share *)(shmat(ClockID, 0, 0));
+    Share = (share *)(shmat(ShareID, 0, 0));
     if(Share == -1)
     {
         perror("Master shmat");
