@@ -128,7 +128,18 @@ int main(int argc, char *argv[]){
 
     MsgID = msgget(MESSAGEKEY, 0666 | IPC_CREAT);
 
-    printf("The clock is at %u seconds and %u nanoseconds.\n", Share->Clock.sec, Share->Clock.nsec);
+    msg.mtype = 1;
+    msg.mtext = "This is a test message";
+
+    msgsnd(MsgID, &msg, sizeof(msg), 0);
+    msg.mtype = 0;
+    msg.mtext = "";
+
+    printf("The clock is at %u seconds and %u nanoseconds, and the message type is %l\n", Share->Clock.sec, Share->Clock.nsec, msg.mtype);
+
+    msgrcv(MsgID, &msg, sizeof(msg), 1, 0);
+
+    printf("Now the message type is %l, and the message is %s\n", msg.mtype, msg.mtext);
 
     shmdt(Share);
     shmctl(ShareID, IPC_RMID, NULL);
