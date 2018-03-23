@@ -134,7 +134,7 @@ int main(int argc, char *argv[]){
     msg.mtype = 0;
     sprintf(msg.mtext, " ");
 
-    printf("The clock is at %u seconds and %u nanoseconds, and the message type is %l\n", Share->Clock.sec, Share->Clock.nsec, msg.mtype);
+    printf("The clock is at %u seconds and %u nanoseconds, and the message type is %ld\n", Share->Clock.sec, Share->Clock.nsec, msg.mtype);
 
     msgrcv(MsgID, &msg, sizeof(msg), 1, 0);
 
