@@ -132,14 +132,13 @@ int main(int argc, char *argv[]){
     sprintf(msg.mtext, "This is a test message.\n");
     msgsnd(MsgID, &msg, sizeof(msg), 0);
     msg.mtype = 0;
-    sprintf(msg.mtext, "");
+    sprintf(msg.mtext, " ");
 
     printf("The clock is at %u seconds and %u nanoseconds, and the message type is %l\n", Share->Clock.sec, Share->Clock.nsec, msg.mtype);
 
     msgrcv(MsgID, &msg, sizeof(msg), 1, 0);
 
-    printf("Now the message type is %l, and the message is: ", msg.mtype);
-    print(msg.mtext);
+    printf("Now the message type is %ld, and the message is: %s", msg.mtype, msg.mtext);
 
     shmdt(Share);
     shmctl(ShareID, IPC_RMID, NULL);
