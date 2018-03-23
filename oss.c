@@ -28,10 +28,12 @@ typedef struct sysclock {
     uint sec;
     uint nsec;
 } sysclock;
+
 typedef struct mesg_buf {
     long mtype;
     char mtext[100];
 } message;
+
 typedef struct share {
     sysclock Clock;
     pcb pcb_array[18];
@@ -126,7 +128,7 @@ int main(int argc, char *argv[]){
 
     MsgID = msgget(MESSAGEKEY, 0666 | IPC_CREAT);
 
-    printf("The clock is at %u seconds and %u nanoseconds.\n", Share->Clock->sec, Share->Clock->nsec);
+    printf("The clock is at %u seconds and %u nanoseconds.\n", Share->Clock.sec, Share->Clock.nsec);
 
     shmdt(Share);
     shmctl(ShareID, IPC_RMID, NULL);
