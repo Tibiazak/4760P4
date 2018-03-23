@@ -1,3 +1,16 @@
+#include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <sys/time.h>
+#include <errno.h>
+#include <signal.h>
+#include <time.h>
+#include <sys/wait.h>
+#include <sys/msg.h>
 #define TIMEOUT 3
 #define SHAREKEY 92195
 #define MESSAGEKEY 110992
