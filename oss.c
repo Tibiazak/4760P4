@@ -24,16 +24,16 @@ typedef struct pcb {
     int time_in_system;
     int last_burst_time;
 } pcb;
-typedef struct clock_t {
+typedef struct sysclock {
     uint sec;
     uint nsec;
-} clock;
+} sysclock;
 typedef struct mesg_buf {
     long mtype;
     char mtext[100];
 } message;
 typedef struct share {
-    clock *Clock;
+    sysclock *Clock;
     pcb *PCB;
 } share;
 
