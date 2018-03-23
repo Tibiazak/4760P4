@@ -24,7 +24,7 @@ typedef struct pcb {
     int time_in_system;
     int last_burst_time;
 } pcb;
-typedef struct clock {
+typedef struct clock_t {
     uint sec;
     uint nsec;
 } clock;
