@@ -33,8 +33,8 @@ typedef struct mesg_buf {
     char mtext[100];
 } message;
 typedef struct share {
-    sysclock *Clock;
-    pcb *PCB;
+    sysclock Clock;
+    pcb pcb_array[18];
 } share;
 
 int ShareID;
@@ -121,8 +121,8 @@ int main(int argc, char *argv[]){
         exit(1);
     }
 
-    Share->Clock->sec = 5;
-    Share->Clock->nsec = 5;
+    Share->Clock.sec = 5;
+    Share->Clock.nsec = 5;
 
     MsgID = msgget(MESSAGEKEY, 0666 | IPC_CREAT);
 
