@@ -11,9 +11,12 @@
 #include <time.h>
 #include <sys/wait.h>
 #include <sys/msg.h>
+
 #define SHAREKEY 92195
 #define MESSAGEKEY 110992
-#typedef unsigned int uint;
+#define PROC_LIMIT 18
+
+typedef unsigned int uint;
 
 typedef struct pcb {
     int simpid;
