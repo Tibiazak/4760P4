@@ -133,7 +133,7 @@ void queueforward(int * arr, int limit)
     }
 }
 
-void startTimer()
+int startTimer()
 {
     // Set the timer-kill
     if (setinterrupt() == -1)
