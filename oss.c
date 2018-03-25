@@ -190,8 +190,17 @@ int main(int argc, char *argv[]){
     Share->Clock.nsec = 0;
 
     MsgID = msgget(MESSAGEKEY, 0666 | IPC_CREAT);
-//    sprintf(msg.mtext, "This is a test message.\n"); (sprintf to write the message)
-
+    sprintf(msg.mtext, "This is a test message.\n"); //(sprintf to write the message)
+    msg.mtype = 1;
+    msgsnd(MsgID, &msg, sizeof(msg), 0);
+    if(fork() == 0)
+    {
+        execl("./user", "./user", "1");
+    }
+    pid_t wpid;
+    int status = 0;
+    while((wpid = wait(&status)) > 0);
+    printf("OSS terminating\n");
     shmdt(Share);
     shmctl(ShareID, IPC_RMID, NULL);
     msgctl(MsgID, IPC_RMID, NULL);
