@@ -45,7 +45,7 @@ typedef struct share {
 static void interrupt()
 {
     printf("Received interrupt!\n");
-    shmdt(Clock);
+    shmdt(Share);
     exit(1);
 }
 
