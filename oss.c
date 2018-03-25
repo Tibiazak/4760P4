@@ -196,7 +196,7 @@ int main(int argc, char *argv[]){
     msgsnd(MsgID, &msg, sizeof(msg), 0);
     if(fork() == 0)
     {
-        execl("./user", "./user", "1", "NULL");
+        execl("./user", "./user", "1", NULL);
     }
     pid_t wpid;
     int status = 0;
