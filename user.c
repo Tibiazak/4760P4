@@ -8,5 +8,14 @@ static void interrupt()
 }
 
 int main(int argc, char *argv[]) {
+    int timeslice;
+    if(argc == 1)
+    {
+        printf("Error! Need to pass the pid!\n");
+        return 1;
+    }
+    int pid = atoi(argv[1]);
     signal(SIGUSR1, interrupt); // registers interrupt handler
+
+
 }
