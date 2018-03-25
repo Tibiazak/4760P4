@@ -158,12 +158,12 @@ int main(int argc, char *argv[]){
     int queue3[PROC_LIMIT];
     int bit_array[PROC_LIMIT];
     int blockQueue[PROC_LIMIT];
-    zeroarray(&queue0, (int) PROC_LIMIT);
-    zeroarray(&queue1, (int) PROC_LIMIT);
-    zeroarray(&queue2, (int) PROC_LIMIT);
-    zeroarray(&queue3, (int) PROC_LIMIT);
-    zeroarray(&bit_array, (int) PROC_LIMIT);
-    zeroarray(&blockQueue, (int) PROC_LIMIT);
+    zeroarray(queue0, PROC_LIMIT);
+    zeroarray(queue1, PROC_LIMIT);
+    zeroarray(queue2, PROC_LIMIT);
+    zeroarray(queue3, PROC_LIMIT);
+    zeroarray(bit_array, PROC_LIMIT);
+    zeroarray(blockQueue, PROC_LIMIT);
 
     if (startTimer() == 1)
     {
