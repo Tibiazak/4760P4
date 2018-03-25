@@ -41,6 +41,10 @@ typedef struct share {
     pcb pcb_array[PROC_LIMIT];
 } share;
 
+int MsgID;
+int ShareID;
+share *Share;
+
 // Interrupt handler for SIGUSR1, detaches shared memory and exits cleanly.
 static void interrupt()
 {
@@ -48,10 +52,6 @@ static void interrupt()
     shmdt(Share);
     exit(1);
 }
-
-int MsgID;
-int ShareID;
-share *Share;
 
 int main(int argc, char *argv[]) {
     int timeslice;
