@@ -63,6 +63,13 @@ int ShareID;
 share *Share;
 int MsgID;
 FILE *fp;
+message msg;
+int queue0[PROC_LIMIT];
+int queue1[PROC_LIMIT];
+int queue2[PROC_LIMIT];
+int queue3[PROC_LIMIT];
+int bit_array[PROC_LIMIT];
+int blockQueue[PROC_LIMIT];
 
 // A function that catches SIGINT and SIGALRM
 // It prints an alert to the screen then sends a signal to all the child processes to terminate,
@@ -178,7 +185,7 @@ sysclock calculateTimeElapsed(sysclock a, sysclock b)
     // assumes A - B
     if(a.sec < b.sec) // if B > A
     {
-        return -1;
+        return NULL;
     }
     if(a.nsec > b.nsec)
     {
@@ -188,7 +195,7 @@ sysclock calculateTimeElapsed(sysclock a, sysclock b)
     {
         if(a.sec == b.sec) // if B > A
         {
-            return -1;
+            return NULL;
         }
         c.nsec = b.nsec - a.nsec;
         a.sec -= 1;
@@ -325,15 +332,8 @@ void checkMsg(message msg)
 
 
 int main(int argc, char *argv[]){
-    message msg;
     uint idlesec = 0;
     uint idlensec = 0;
-    int queue0[PROC_LIMIT];
-    int queue1[PROC_LIMIT];
-    int queue2[PROC_LIMIT];
-    int queue3[PROC_LIMIT];
-    int bit_array[PROC_LIMIT];
-    int blockQueue[PROC_LIMIT];
     zeroarray(queue0, PROC_LIMIT);
     zeroarray(queue1, PROC_LIMIT);
     zeroarray(queue2, PROC_LIMIT);
@@ -373,7 +373,6 @@ int main(int argc, char *argv[]){
     sprintf(msg.mtext, "This is a test message.\n"); //(sprintf to write the message)
     msg.mtype = 1;
     msgsnd(MsgID, &msg, sizeof(msg), 0);
-
 
 
     // waits for child processes to finish
