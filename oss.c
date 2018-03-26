@@ -20,21 +20,26 @@
 #define MaxTimeBetweenNewProcsSecs 1
 #define MaxTimeBetweeNewProcsNS 500000000
 #define RealTimeProcs 10
+#define TIMESLICE0 "1000000"
+#define TIMESLICE1 "2000000"
+#define TIMESLICE2 "4000000"
+#define TIMESLICE3 "8000000"
 
 typedef unsigned int uint;
-
-typedef struct pcb {
-    int simpid;
-    int priority;
-    int cpu_used;
-    int time_in_system;
-    int last_burst_time;
-} pcb;
 
 typedef struct sysclock {
     uint sec;
     uint nsec;
 } sysclock;
+
+typedef struct pcb {
+    int simpid;
+    int priority;
+    int cpu_used;
+    sysclock launch_time;
+    sysclock time_in_system;
+    sysclock last_burst_time;
+} pcb;
 
 typedef struct mesg_buf {
     long mtype;
@@ -99,7 +104,6 @@ static int setperiodic(double sec)
     return timer_settime(timerid, 0, &value, NULL);
 }
 
-
 int findopen(int *arr)
 {
     int i = 0;
@@ -149,6 +153,171 @@ int startTimer()
     return 0;
 }
 
+sysclock getNextLaunchTime()
+{
+    // return the time for the next process launch
+}
+
+sysclock calculateTimeElapsed(sysclock a, sysclock b)
+{
+    sysclock c;
+    // assumes A - B
+    if(a.sec < b.sec) // if B > A
+    {
+        return -1;
+    }
+    if(a.nsec > b.nsec)
+    {
+        c.nsec = a.nsec - b.nsec;
+    }
+    else
+    {
+        if(a.sec == b.sec) // if B > A
+        {
+            return -1;
+        }
+        c.nsec = b.nsec - a.nsec;
+        a.sec -= 1;
+    }
+    c.sec = a.sec - b.sec;
+    return c;
+}
+
+int getPriority()
+{
+    // needs to actually randomly decide whether real time or not
+    return 1;
+}
+
+void forkchild(int childpid)
+{
+    if(fork() == 0)
+    {
+        execl("./user", "./user", childpid, NULL);
+        perror("Exec failed!\n");
+        exit(1);
+    }
+}
+
+void makeProcess(int childpid)
+{
+    Share->pcb_array[childpid].simpid = childpid;
+    Share->pcb_array[childpid].priority = getPriority();
+    Share->pcb_array[childpid].cpu_used = 0;
+    Share->pcb_array[childpid].last_burst_time.sec = 0;
+    Share->pcb_array[childpid].last_burst_time.nsec = 0;
+    Share->pcb_array[childpid].time_in_system.sec = 0;
+    Share->pcb_array[childpid].time_in_system.nsec = 0;
+    Share->pcb_array[childpid].launch_time.sec = Share->Clock.sec;
+    Share->pcb_array[childpid].launch_time.nsec = Share->Clock.nsec;
+    bit_array[childpid] = 1;
+    forkchild(childpid);
+}
+
+int procsRunning(int *arr)
+{
+    int i;
+    for(i = 0; i < PROC_LIMIT; i++)
+    {
+        if (arr[i])
+            return 1;
+    }
+    return 0;
+}
+
+void scheduler()
+{
+    if (procsRunning(bit_array))
+    {
+        checkBlock();
+        CurrentChild = getNextProcess();
+        message msg;
+        msg.mtype = CurrentChild;
+        int qNum;
+        qNum = Share->pcb_array[CurrentChild-1].priority;
+        switch(qNum)
+        {
+            case 0:
+                sprintf(msg.mtext, TIMESLICE0);
+                break;
+            case 1:
+                sprintf(msg.mtext, TIMESLICE1);
+                break;
+            case 2:
+                sprintf(msg.mtext, TIMESLICE2);
+                break;
+            case 3:
+                sprintf(msg.mtext, TIMESLICE3);
+                break;
+        }
+        msgsnd(MsgID, &msg, sizeof(msg), 0);
+    }
+    else
+    {
+        // if no procs running, launch new proc
+    }
+}
+
+void checkMsg(message msg)
+{
+    msgrcv(MsgID, &msg, sizeof(msg), 0, 0);
+    char messageString[100];
+    strcopy(messageString, msg.mtext);
+    char * temp;
+    temp = strtok(messageString, " ");
+    int flag = atoi(temp);
+    switch(flag)
+    {
+        case 0:
+            // timeslice used
+            temp = strtok(messageString, NULL);
+            int slice = atoi(temp);
+            if((Share->Clock.nsec + slice) >= BILLION)
+            {
+                Share->Clock.sec++;
+                Share->Clock.nsec = (Share->Clock.nsec + slice) - BILLION;
+            }
+            else
+            {
+                Share->Clock.nsec += slice;
+            }
+            break;
+        case 1:
+            // terminating
+            temp = strtok(messageString, NULL);
+            int slice = atoi(temp);
+            if((Share->Clock.nsec + slice) >= BILLION)
+            {
+                Share->Clock.sec++;
+                Share->Clock.nsec = (Share->Clock.nsec + slice) - BILLION;
+            }
+            else
+            {
+                Share->Clock.nsec += slice;
+            }
+            terminate();
+            break;
+        case 2:
+            // blocked
+            temp = strtok(messageString, NULL);
+            int slice = atoi(temp);
+            if((Share->Clock.nsec + slice) >= BILLION)
+            {
+                Share->Clock.sec++;
+                Share->Clock.nsec = (Share->Clock.nsec + slice) - BILLION;
+            }
+            else
+            {
+                Share->Clock.nsec += slice;
+            }
+            blocked();
+            break;
+    }
+    scheduler();
+}
+
+
+
 int main(int argc, char *argv[]){
     message msg;
     uint idlesec = 0;
@@ -187,20 +356,64 @@ int main(int argc, char *argv[]){
         exit(1);
     }
 
+    // initialize clock
     Share->Clock.sec = 0;
     Share->Clock.nsec = 0;
 
+    // get message queue
     MsgID = msgget(MESSAGEKEY, 0666 | IPC_CREAT);
+
+    // test message
     sprintf(msg.mtext, "This is a test message.\n"); //(sprintf to write the message)
     msg.mtype = 1;
     msgsnd(MsgID, &msg, sizeof(msg), 0);
+
+    childpid = findopen(bit_array);
+    if(childpid == -1)
+    {
+        // all processes in use
+    }
+    else
+    {
+        makeProcess(childpid);
+    }
+    // fork (need to generalize)
     if(fork() == 0)
     {
         execl("./user", "./user", "1", NULL);
     }
+
+    if(bit_array[queue0[0]] != 0)
+    {
+        msg.mtype = queue0[0];
+        msg.mtext = sprintf(msg.mtext, TIMESLICE0);
+        msgsnd(MsgID, &msg, sizeof(msg), 0);
+    }
+    else if (bit_array[queue1[0]] != 0)
+    {
+        msg.mtype = queue1[0];
+        msg.mtext = sprintf(msg.mtext, TIMESLICE1);
+        msgsnd(MsgID, &msg, sizeof(msg), 0);
+    }
+    else if (bit_array[queue2[0]] != 0)
+    {
+        msg.mtype = queue2[0];
+        msg.mtext = sprintf(msg.mtext, TIMESLICE2);
+        msgsnd(MsgID, &msg, sizeof(msg), 0);
+    }
+    else if (bit_array[queue3[0]] != 0)
+    {
+        msg.mtype = queue3[0];
+        msg.mtext = sprintf(msg.mtext, TIMESLICE3);
+        msgsnd(MsgID, &msg, sizeof(msg), 0);
+    }
+
+    // waits for child processes to finish
     pid_t wpid;
     int status = 0;
     while((wpid = wait(&status)) > 0);
+
+    // signal termination
     printf("OSS terminating\n");
     shmdt(Share);
     shmctl(ShareID, IPC_RMID, NULL);
