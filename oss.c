@@ -470,6 +470,7 @@ int main(int argc, char *argv[]){
     sprintf(msg.mtext, "This is a test message.\n"); //(sprintf to write the message)
     msg.mtype = 1;
     msgsnd(MsgID, &msg, sizeof(msg), 0);
+    launchProc();
 
 
     // waits for child processes to finish
