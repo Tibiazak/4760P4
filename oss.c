@@ -183,11 +183,11 @@ sysclock getNextLaunchTime()
 // Calculates the time elapsed between two clock times
 sysclock calculateTimeElapsed(sysclock a, sysclock b)
 {
-    sysclock c;
+    sysclock c = {0, 0};
     // assumes A - B
     if(a.sec < b.sec) // if B > A
     {
-        return c = {0, 0};
+        return c;
     }
     if(a.nsec > b.nsec)
     {
@@ -197,7 +197,7 @@ sysclock calculateTimeElapsed(sysclock a, sysclock b)
     {
         if(a.sec == b.sec) // if B > A
         {
-            return c = {0, 0};
+            return c;
         }
         c.nsec = b.nsec - a.nsec;
         a.sec -= 1;
