@@ -178,7 +178,18 @@ int startTimer()
 // Returns the next time to launch a process
 sysclock getNextLaunchTime()
 {
-    // return the time for the next process launch
+    sysclock time;
+    if ((Share->Clock.nsec + 500000000) > BILLION)
+    {
+        time.sec = Share->Clock.sec + 1;
+        time.nsec = 250000000;
+    }
+    else
+    {
+        time.sec = Share->Clock.sec;
+        time.nsec = Share->Clock.nsec + 500000000;
+    }
+    return time;
 }
 
 // Calculates the time elapsed between two clock times
