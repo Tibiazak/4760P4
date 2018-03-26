@@ -236,19 +236,41 @@ void forkchild(int childpid)
     }
 }
 
+void addqueue(int * queue, int pid)
+{
+    int i;
+    for(i = 0; i < PROC_LIMIT; i++)
+    {
+        if(queue[i] == 0)
+        {
+            queue[i] = pid;
+            return;
+        }
+    }
+}
+
+
 // Makes a new process by initializing the PCB and forking the child
 void makeProcess(int childpid)
 {
-    Share->pcb_array[childpid].simpid = childpid;
-    Share->pcb_array[childpid].priority = getPriority();
-    Share->pcb_array[childpid].cpu_used = 0;
-    Share->pcb_array[childpid].last_burst_time.sec = 0;
-    Share->pcb_array[childpid].last_burst_time.nsec = 0;
-    Share->pcb_array[childpid].time_in_system.sec = 0;
-    Share->pcb_array[childpid].time_in_system.nsec = 0;
-    Share->pcb_array[childpid].launch_time.sec = Share->Clock.sec;
-    Share->pcb_array[childpid].launch_time.nsec = Share->Clock.nsec;
-    bit_array[childpid] = 1;
+    Share->pcb_array[childpid-1].simpid = childpid;
+    Share->pcb_array[childpid-1].priority = getPriority();
+    if(Share->pcb_array[childpid-1].priority == 0)
+    {
+        addqueue(queue0, childpid);
+    }
+    else
+    {
+        addqueue(queue1, childpid);
+    }
+    Share->pcb_array[childpid-1].cpu_used = 0;
+    Share->pcb_array[childpid-1].last_burst_time.sec = 0;
+    Share->pcb_array[childpid-1].last_burst_time.nsec = 0;
+    Share->pcb_array[childpid-1].time_in_system.sec = 0;
+    Share->pcb_array[childpid-1].time_in_system.nsec = 0;
+    Share->pcb_array[childpid-1].launch_time.sec = Share->Clock.sec;
+    Share->pcb_array[childpid-1].launch_time.nsec = Share->Clock.nsec;
+    bit_array[childpid-1] = 1;
     forkchild(childpid);
 }
 
@@ -262,6 +284,36 @@ int procsRunning(int *arr)
             return 1;
     }
     return 0;
+}
+
+void checkBlock()
+{
+    return;
+}
+
+int isTimeToLaunch()
+{
+    if (Share->Clock.sec > nextLaunch.sec)
+    {
+        return 1;
+    }
+    else if ((Share->Clock.sec == nextLaunch.sec) && (Share->Clock.nsec > nextLaunch.nsec))
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+void launchProc()
+{
+    int index;
+    if ((index = findopen(bit_array)) != -1)
+    {
+        makeProcess(index + 1);
+    }
 }
 
 // Actual scheduler algorithm
