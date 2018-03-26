@@ -72,6 +72,7 @@ int queue3[PROC_LIMIT];
 int bit_array[PROC_LIMIT];
 int blockQueue[PROC_LIMIT];
 int CurrentChild;
+sysclock event[PROC_LIMIT];
 
 // A function that catches SIGINT and SIGALRM
 // It prints an alert to the screen then sends a signal to all the child processes to terminate,
@@ -297,7 +298,7 @@ void checkMsg(message msg)
     char * temp;
     temp = strtok(messageString, " ");
     int flag = atoi(temp);
-    temp = strtok(messageString, NULL);
+    temp = strtok(NULL, " ");
     int slice = atoi(temp);
     if((Share->Clock.nsec + slice) >= BILLION)
     {
@@ -320,9 +321,9 @@ void checkMsg(message msg)
             break;
         case 2:
             // blocked, get the "event" its blocked on and call function to handle blocking
-            temp = strtok(messageString, " ");
+            temp = strtok(NULL, " ");
             event[CurrentChild-1].sec = atoi(temp);
-            temp = strtok(messageString, " ");
+            temp = strtok(NULL, " ");
             event[CurrentChild-1].nsec = atoi(temp);
             blocked();
             break;
