@@ -1,3 +1,11 @@
+/*
+ * Joshua Bearden
+ * Operating Systems
+ * 3/25/18
+ *
+ * A program to simulate an operating system scheduler. This program is currently incomplete.
+ *
+ */
 #include <stdio.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -104,6 +112,7 @@ static int setperiodic(double sec)
     return timer_settime(timerid, 0, &value, NULL);
 }
 
+// A function that finds the first open spot in the given array and returns its index
 int findopen(int *arr)
 {
     int i = 0;
@@ -117,6 +126,7 @@ int findopen(int *arr)
     return -1;
 }
 
+// A function that sets every element in an int array to 0.
 void zeroarray(int * arr, int limit)
 {
     int i;
@@ -126,6 +136,7 @@ void zeroarray(int * arr, int limit)
     }
 }
 
+// A function that simulates a queue using a C array
 void queueforward(int * arr, int limit)
 {
     int i = 0;
@@ -137,6 +148,7 @@ void queueforward(int * arr, int limit)
     }
 }
 
+// Starts the real-time alarm
 int startTimer()
 {
     // Set the timer-kill
@@ -153,11 +165,13 @@ int startTimer()
     return 0;
 }
 
+// Returns the next time to launch a process
 sysclock getNextLaunchTime()
 {
     // return the time for the next process launch
 }
 
+// Calculates the time elapsed between two clock times
 sysclock calculateTimeElapsed(sysclock a, sysclock b)
 {
     sysclock c;
@@ -183,12 +197,14 @@ sysclock calculateTimeElapsed(sysclock a, sysclock b)
     return c;
 }
 
+// Determines whether a function is real-time or not
 int getPriority()
 {
     // needs to actually randomly decide whether real time or not
     return 1;
 }
 
+// Fork & exec a child with a given simulated pid
 void forkchild(int childpid)
 {
     if(fork() == 0)
@@ -199,6 +215,7 @@ void forkchild(int childpid)
     }
 }
 
+// Makes a new process by initializing the PCB and forking the child
 void makeProcess(int childpid)
 {
     Share->pcb_array[childpid].simpid = childpid;
@@ -214,6 +231,7 @@ void makeProcess(int childpid)
     forkchild(childpid);
 }
 
+// Returns true if there is a process running, false otherwise
 int procsRunning(int *arr)
 {
     int i;
@@ -225,94 +243,82 @@ int procsRunning(int *arr)
     return 0;
 }
 
+// Actual scheduler algorithm
 void scheduler()
 {
-    if (procsRunning(bit_array))
+    checkBlock(); // Checks the blocked queue
+    if (isTimeToLaunch()) // Checks if its time to launch a new process
     {
-        checkBlock();
-        CurrentChild = getNextProcess();
-        message msg;
-        msg.mtype = CurrentChild;
-        int qNum;
-        qNum = Share->pcb_array[CurrentChild-1].priority;
-        switch(qNum)
-        {
-            case 0:
-                sprintf(msg.mtext, TIMESLICE0);
-                break;
-            case 1:
-                sprintf(msg.mtext, TIMESLICE1);
-                break;
-            case 2:
-                sprintf(msg.mtext, TIMESLICE2);
-                break;
-            case 3:
-                sprintf(msg.mtext, TIMESLICE3);
-                break;
-        }
-        msgsnd(MsgID, &msg, sizeof(msg), 0);
+        launchProc();
     }
-    else
+
+    // Gets the pid of the next process to run
+    CurrentChild = getNextProcess();
+    message msg;
+
+    // prepares the message - mtype is pid of child, message is timeslice its given
+    msg.mtype = CurrentChild;
+    int qNum;
+    qNum = Share->pcb_array[CurrentChild-1].priority;
+    switch(qNum)
     {
-        // if no procs running, launch new proc
+        case 0:
+            sprintf(msg.mtext, TIMESLICE0);
+            break;
+        case 1:
+            sprintf(msg.mtext, TIMESLICE1);
+            break;
+        case 2:
+            sprintf(msg.mtext, TIMESLICE2);
+            break;
+        case 3:
+            sprintf(msg.mtext, TIMESLICE3);
+            break;
     }
+    msgsnd(MsgID, &msg, sizeof(msg), 0); // sends message
 }
 
+// receives and interprets messages received from the child processes
 void checkMsg(message msg)
 {
+    // get message and get the first argument of the message text (a flag stating what happened)
     msgrcv(MsgID, &msg, sizeof(msg), 0, 0);
     char messageString[100];
     strcopy(messageString, msg.mtext);
     char * temp;
     temp = strtok(messageString, " ");
     int flag = atoi(temp);
+    temp = strtok(messageString, NULL);
+    int slice = atoi(temp);
+    if((Share->Clock.nsec + slice) >= BILLION)
+    {
+        Share->Clock.sec++;
+        Share->Clock.nsec = (Share->Clock.nsec + slice) - BILLION;
+    }
+    else
+    {
+        Share->Clock.nsec += slice;
+    }
+    // based on the results of the flag, perform an action
     switch(flag)
     {
         case 0:
-            // timeslice used
-            temp = strtok(messageString, NULL);
-            int slice = atoi(temp);
-            if((Share->Clock.nsec + slice) >= BILLION)
-            {
-                Share->Clock.sec++;
-                Share->Clock.nsec = (Share->Clock.nsec + slice) - BILLION;
-            }
-            else
-            {
-                Share->Clock.nsec += slice;
-            }
+            // timeslice used, do nothing
             break;
         case 1:
-            // terminating
-            temp = strtok(messageString, NULL);
-            int slice = atoi(temp);
-            if((Share->Clock.nsec + slice) >= BILLION)
-            {
-                Share->Clock.sec++;
-                Share->Clock.nsec = (Share->Clock.nsec + slice) - BILLION;
-            }
-            else
-            {
-                Share->Clock.nsec += slice;
-            }
+            // terminating, call function to handle termination
             terminate();
             break;
         case 2:
-            // blocked
-            temp = strtok(messageString, NULL);
-            int slice = atoi(temp);
-            if((Share->Clock.nsec + slice) >= BILLION)
-            {
-                Share->Clock.sec++;
-                Share->Clock.nsec = (Share->Clock.nsec + slice) - BILLION;
-            }
-            else
-            {
-                Share->Clock.nsec += slice;
-            }
+            // blocked, get the "event" its blocked on and call function to handle blocking
+            temp = strtok(messageString, " ");
+            event[CurrentChild-1].sec = atoi(temp);
+            temp = strtok(messageString, " ");
+            event[CurrentChild-1].nsec = atoi(temp);
             blocked();
             break;
     }
+    // Now that the current process has finished, call the scheduler again.
     scheduler();
 }
 
@@ -368,45 +374,7 @@ int main(int argc, char *argv[]){
     msg.mtype = 1;
     msgsnd(MsgID, &msg, sizeof(msg), 0);
 
-    childpid = findopen(bit_array);
-    if(childpid == -1)
-    {
-        // all processes in use
-    }
-    else
-    {
-        makeProcess(childpid);
-    }
-    // fork (need to generalize)
-    if(fork() == 0)
-    {
-        execl("./user", "./user", "1", NULL);
-    }
 
-    if(bit_array[queue0[0]] != 0)
-    {
-        msg.mtype = queue0[0];
-        msg.mtext = sprintf(msg.mtext, TIMESLICE0);
-        msgsnd(MsgID, &msg, sizeof(msg), 0);
-    }
-    else if (bit_array[queue1[0]] != 0)
-    {
-        msg.mtype = queue1[0];
-        msg.mtext = sprintf(msg.mtext, TIMESLICE1);
-        msgsnd(MsgID, &msg, sizeof(msg), 0);
-    }
-    else if (bit_array[queue2[0]] != 0)
-    {
-        msg.mtype = queue2[0];
-        msg.mtext = sprintf(msg.mtext, TIMESLICE2);
-        msgsnd(MsgID, &msg, sizeof(msg), 0);
-    }
-    else if (bit_array[queue3[0]] != 0)
-    {
-        msg.mtype = queue3[0];
-        msg.mtext = sprintf(msg.mtext, TIMESLICE3);
-        msgsnd(MsgID, &msg, sizeof(msg), 0);
-    }
 
     // waits for child processes to finish
     pid_t wpid;
