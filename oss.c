@@ -73,6 +73,7 @@ int bit_array[PROC_LIMIT];
 int blockQueue[PROC_LIMIT];
 int CurrentChild;
 sysclock event[PROC_LIMIT];
+sysclock nextLaunch = {0,0};
 
 // A function that catches SIGINT and SIGALRM
 // It prints an alert to the screen then sends a signal to all the child processes to terminate,
