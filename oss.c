@@ -294,7 +294,7 @@ void checkMsg(message msg)
     // get message and get the first argument of the message text (a flag stating what happened)
     msgrcv(MsgID, &msg, sizeof(msg), 0, 0);
     char messageString[100];
-    strcopy(messageString, msg.mtext);
+    strcpy(messageString, msg.mtext);
     char * temp;
     temp = strtok(messageString, " ");
     int flag = atoi(temp);
