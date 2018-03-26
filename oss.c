@@ -19,6 +19,7 @@
 #include <time.h>
 #include <sys/wait.h>
 #include <sys/msg.h>
+#include <string.h>
 
 #define TIMEOUT 3
 #define SHAREKEY 92195
@@ -70,6 +71,7 @@ int queue2[PROC_LIMIT];
 int queue3[PROC_LIMIT];
 int bit_array[PROC_LIMIT];
 int blockQueue[PROC_LIMIT];
+int CurrentChild;
 
 // A function that catches SIGINT and SIGALRM
 // It prints an alert to the screen then sends a signal to all the child processes to terminate,
@@ -185,7 +187,7 @@ sysclock calculateTimeElapsed(sysclock a, sysclock b)
     // assumes A - B
     if(a.sec < b.sec) // if B > A
     {
-        return NULL;
+        return c = {0, 0};
     }
     if(a.nsec > b.nsec)
     {
@@ -195,7 +197,7 @@ sysclock calculateTimeElapsed(sysclock a, sysclock b)
     {
         if(a.sec == b.sec) // if B > A
         {
-            return NULL;
+            return c = {0, 0};
         }
         c.nsec = b.nsec - a.nsec;
         a.sec -= 1;
