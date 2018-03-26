@@ -1,1 +1,16 @@
 A program to simulate OS scheduling
+Joshua Bearden
+
+
+This program can be compiled by running make all
+This program is incomplete. Currently there are functions implementing the majority of the main logic:
+scheduler() which calls a stub that would check the block queue to see if anything needs to be unblocked, then checks if its time to launch a new process (calling a function to do so),
+then gets the pid for the next process that should run by calling a function that checks all the queues, in order, returning the first process of the highest priority queue.
+It then sends a message containing the child's timeslice to the child.
+
+Next there is a function called checkmsg() that waits for a message to be received, and interprets it based on whether it is a process using its timeslice, terminating, or blocking.
+
+I have a number of stub functions and a number of helper functions that facilitate queue functionality with C's arrays, and generally move things around.
+
+
+User currently just sets up the shared memory and reads a test message via the queues, outputting it to the screen.

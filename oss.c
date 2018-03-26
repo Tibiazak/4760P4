@@ -470,8 +470,11 @@ int main(int argc, char *argv[]){
     sprintf(msg.mtext, "This is a test message.\n"); //(sprintf to write the message)
     msg.mtype = 1;
     msgsnd(MsgID, &msg, sizeof(msg), 0);
-    launchProc();
-
+    int pid;
+    if (pid = fork() == 0)
+    {
+        execl("./user", "./user", "1", NULL);
+    }
 
     // waits for child processes to finish
     pid_t wpid;
