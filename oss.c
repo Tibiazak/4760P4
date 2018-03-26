@@ -249,6 +249,26 @@ void addqueue(int * queue, int pid)
     }
 }
 
+int getNextProcess()
+{
+    if (queue0[0] != 0)
+    {
+        return queue0[0];
+    }
+    else if (queue1[0] != 0)
+    {
+        return queue1[0];
+    }
+    else if (queue2[0] != 0)
+    {
+        return queue2[0];
+    }
+    else
+    {
+        return queue3[0];
+    }
+}
+
 
 // Makes a new process by initializing the PCB and forking the child
 void makeProcess(int childpid)
@@ -287,6 +307,16 @@ int procsRunning(int *arr)
 }
 
 void checkBlock()
+{
+    return;
+}
+
+void blocked()
+{
+    return;
+}
+
+void terminate()
 {
     return;
 }
